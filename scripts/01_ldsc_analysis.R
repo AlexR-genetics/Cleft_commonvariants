@@ -161,69 +161,6 @@ ggsave(
   dpi = 300
 )
 
-# -----------------------------------------------------------------------------
-# Visualisation 2: Correlation Heatmap
-# -----------------------------------------------------------------------------
-
-# Get unique traits
-unique_traits <- unique(c(all_results$trait1, all_results$trait2))
-n_traits <- length(unique_traits)
-
-# Initialize correlation matrix
-cor_matrix <- matrix(
-  NA, n_traits, n_traits,
-  dimnames = list(unique_traits, unique_traits)
-)
-diag(cor_matrix) <- 1
-
-# Fill the matrix (symmetric)
-for (i in 1:nrow(all_results)) {
-  row_idx <- which(unique_traits == all_results$trait1[i])
-  col_idx <- which(unique_traits == all_results$trait2[i])
-  cor_matrix[row_idx, col_idx] <- all_results$rg[i]
-  cor_matrix[col_idx, row_idx] <- all_results$rg[i]
-}
-
-# Generate heatmap
-png(file.path(OUTPUT_DIR, "genetic_correlations_heatmap.png"), 
-    width = 10, height = 8, units = "in", res = 300)
-
-pheatmap(
-  cor_matrix,
-  color = colorRampPalette(c("blue", "white", "red"))(100),
-  breaks = seq(-1, 1, length.out = 101),
-  cluster_rows = TRUE,
-  cluster_cols = TRUE,
-  display_numbers = TRUE,
-  number_format = "%.2f",
-  main = "Genetic Correlation Heatmap",
-  fontsize = 10,
-  fontsize_number = 8
-)
-
-dev.off()
-
-# -----------------------------------------------------------------------------
-# Summary Statistics
-# -----------------------------------------------------------------------------
-
-summary_stats <- all_results %>%
-  summarise(
-    n_comparisons = n(),
-    n_significant_p05 = sum(p < 0.05),
-    n_significant_p01 = sum(p < 0.01),
-    mean_abs_rg = mean(abs(rg)),
-    median_abs_rg = median(abs(rg)),
-    range_rg = paste(round(min(rg), 3), "to", round(max(rg), 3))
-  )
-
-cat("\n=== Summary Statistics ===\n")
-print(summary_stats)
-
-# -----------------------------------------------------------------------------
-# Save Results
-# -----------------------------------------------------------------------------
-
 write.csv(all_results, file.path(OUTPUT_DIR, "ldsc_combined_results.csv"), row.names = FALSE)
 cat("\nResults saved to:", file.path(OUTPUT_DIR, "ldsc_combined_results.csv"), "\n")
 
