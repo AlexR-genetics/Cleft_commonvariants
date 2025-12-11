@@ -1,22 +1,5 @@
 #!/usr/bin/env Rscript
-# ==============================================================================
 # Polygenic Risk Score Analysis
-# ==============================================================================
-# Description: Comprehensive PRS analysis for cleft lip/palate study including:
-#              1. Case-control comparisons
-#              2. Cleft subtype analyses
-#              3. Behavioural/developmental outcome associations
-#              4. ND-CNV carrier analyses
-#
-# Input:  PRSice output files (.all_score), phenotype files, covariate files
-# Output: Results tables in DOCX format
-#
-# Required packages: data.table, tidyverse, fmsb, haven, officer, flextable
-# ==============================================================================
-
-# -----------------------------------------------------------------------------
-# Setup
-# -----------------------------------------------------------------------------
 
 library(data.table)
 library(tidyverse)
@@ -127,7 +110,6 @@ prs_cleft <- prs_cleft[, c(1, 2, 3, 6)]
 # Merge All PRS Data
 # -----------------------------------------------------------------------------
 
-cat("Merging datasets...\n")
 
 # Sequential merging of all PRS with PCA/phenotype data
 scores_allsample <- pca

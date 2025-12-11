@@ -1,9 +1,7 @@
 #!/bin/bash
-# ==============================================================================
-# PRSice-2 Polygenic Risk Score Calculation
-# ==============================================================================
-# Description: Calculates polygenic risk scores for neurodevelopmental traits
-#              and cleft using PRSice-2.
+
+# Calculate polygenic risk scores for neurodevelopmental traits
+# and cleft using PRSice-2.
 #
 # Prerequisites:
 #   - PRSice-2 installed (https://www.prsice.info/)
@@ -68,12 +66,10 @@ CLEFT_GWAS="Cleft_meta.txt"
 # PRS CALCULATIONS
 # ==============================================================================
 
-echo "=== Calculating Polygenic Risk Scores ==="
 
 # -----------------------------------------------------------------------------
 # Schizophrenia PRS
 # -----------------------------------------------------------------------------
-echo "Calculating Schizophrenia PRS..."
 
 Rscript ${PRSICE_R} \
     --prsice ${PRSICE_BINARY} \
@@ -102,7 +98,6 @@ Rscript ${PRSICE_R} \
 # -----------------------------------------------------------------------------
 # ADHD PRS
 # -----------------------------------------------------------------------------
-echo "Calculating ADHD PRS..."
 
 Rscript ${PRSICE_R} \
     --prsice ${PRSICE_BINARY} \
@@ -131,7 +126,6 @@ Rscript ${PRSICE_R} \
 # -----------------------------------------------------------------------------
 # Autism PRS
 # -----------------------------------------------------------------------------
-echo "Calculating Autism PRS..."
 
 Rscript ${PRSICE_R} \
     --prsice ${PRSICE_BINARY} \
@@ -160,7 +154,6 @@ Rscript ${PRSICE_R} \
 # -----------------------------------------------------------------------------
 # Bipolar Disorder PRS
 # -----------------------------------------------------------------------------
-echo "Calculating Bipolar Disorder PRS..."
 
 Rscript ${PRSICE_R} \
     --prsice ${PRSICE_BINARY} \
@@ -189,7 +182,6 @@ Rscript ${PRSICE_R} \
 # -----------------------------------------------------------------------------
 # Depression PRS
 # -----------------------------------------------------------------------------
-echo "Calculating Depression PRS..."
 
 Rscript ${PRSICE_R} \
     --prsice ${PRSICE_BINARY} \
@@ -218,7 +210,6 @@ Rscript ${PRSICE_R} \
 # -----------------------------------------------------------------------------
 # Anxiety PRS
 # -----------------------------------------------------------------------------
-echo "Calculating Anxiety PRS..."
 
 Rscript ${PRSICE_R} \
     --prsice ${PRSICE_BINARY} \
@@ -247,7 +238,6 @@ Rscript ${PRSICE_R} \
 # -----------------------------------------------------------------------------
 # Educational Attainment PRS
 # -----------------------------------------------------------------------------
-echo "Calculating Educational Attainment PRS..."
 
 Rscript ${PRSICE_R} \
     --prsice ${PRSICE_BINARY} \
@@ -276,7 +266,6 @@ Rscript ${PRSICE_R} \
 # -----------------------------------------------------------------------------
 # Intelligence PRS
 # -----------------------------------------------------------------------------
-echo "Calculating Intelligence PRS..."
 
 Rscript ${PRSICE_R} \
     --prsice ${PRSICE_BINARY} \
@@ -306,7 +295,6 @@ Rscript ${PRSICE_R} \
 # Cleft PRS (using independent GWAS to avoid overfitting)
 # Note: Different thresholds including genome-wide significant
 # -----------------------------------------------------------------------------
-echo "Calculating Cleft PRS..."
 
 Rscript ${PRSICE_R} \
     --prsice ${PRSICE_BINARY} \
@@ -332,6 +320,4 @@ Rscript ${PRSICE_R} \
     --thread 1 \
     --out ${OUT_DIR}/Cleft_PRS_meta
 
-echo "=== PRS Calculation Complete ==="
-echo "Results saved to: ${OUT_DIR}"
-echo "Process .all_score files with 02_prs_analysis.R"
+

@@ -1,20 +1,4 @@
 #!/usr/bin/env Rscript
-# ==============================================================================
-# LDSC Genetic Correlation Analysis
-# ==============================================================================
-# Description: Processes LDSC output files to extract genetic correlations 
-#              between cleft lip/palate and neurodevelopmental traits.
-#              Generates forest plots, heatmaps, and summary statistics.
-#
-# Input:  LDSC .log output files from ldsc.py --rg analyses
-# Output: Forest plot, heatmap, summary CSV
-#
-# Required packages: tidyverse, ggplot2, corrplot, pheatmap, viridis
-# ==============================================================================
-
-# -----------------------------------------------------------------------------
-# Setup
-# -----------------------------------------------------------------------------
 
 # Install packages if needed (uncomment if required)
 # install.packages(c("tidyverse", "ggplot2", "corrplot", "pheatmap", "viridis"))
@@ -26,7 +10,7 @@ library(pheatmap)
 library(viridis)
 
 # -----------------------------------------------------------------------------
-# Configuration - UPDATE THESE PATHS
+# Configuration 
 # -----------------------------------------------------------------------------
 
 # Path to folder containing LDSC output .log files
@@ -42,10 +26,6 @@ if (!dir.exists(OUTPUT_DIR)) dir.create(OUTPUT_DIR, recursive = TRUE)
 # Functions
 # -----------------------------------------------------------------------------
 
-#' Extract results from LDSC output file
-#' 
-#' @param file_path Path to LDSC .log output file
-#' @return Data frame with genetic correlation statistics
 extract_ldsc_results <- function(file_path) {
   
   # Read the file
@@ -99,18 +79,12 @@ extract_ldsc_results <- function(file_path) {
   )
 }
 
-# -----------------------------------------------------------------------------
-# Main Analysis
-# -----------------------------------------------------------------------------
-
-# Read all LDSC output files
 ldsc_files <- list.files(RESULTS_FOLDER, full.names = TRUE, pattern = "\\.log$")
 
 if (length(ldsc_files) == 0) {
   stop("No LDSC output files found in: ", RESULTS_FOLDER)
 }
 
-cat("Processing", length(ldsc_files), "LDSC output files...\n")
 
 # Extract results from all files
 all_results <- map_df(ldsc_files, extract_ldsc_results)
@@ -128,40 +102,7 @@ all_results <- all_results %>%
     rg_ci_upper = rg + 1.96 * se
   )
 
-# Print summary
-cat("\n=== Summary of LDSC Results ===\n\n")
-print(all_results %>% select(trait1, trait2, rg, se, p, significant))
 
-# -----------------------------------------------------------------------------
-# Visualisation 1: Forest Plot
-# -----------------------------------------------------------------------------
 
-p_forest <- ggplot(all_results, aes(x = rg, y = paste(trait1, "-", trait2))) +
-  geom_point(size = 3) +
-  geom_errorbarh(aes(xmin = rg_ci_lower, xmax = rg_ci_upper), height = 0.2) +
-  geom_vline(xintercept = 0, linetype = "dashed", color = "gray50") +
-  geom_text(aes(label = significant, x = rg_ci_upper + 0.05), size = 5) +
-  theme_minimal() +
-  labs(
-    x = "Genetic Correlation (rg)",
-    y = "Trait Pairs",
-    title = "Genetic Correlations from LD Score Regression",
-    subtitle = "Error bars represent 95% confidence intervals"
-  ) +
-  theme(
-    plot.title = element_text(size = 16, face = "bold"),
-    axis.text = element_text(size = 10)
-  )
-
-ggsave(
-  file.path(OUTPUT_DIR, "genetic_correlations_forest.png"), 
-  p_forest, 
-  width = 10, 
-  height = 8,
-  dpi = 300
-)
 
 write.csv(all_results, file.path(OUTPUT_DIR, "ldsc_combined_results.csv"), row.names = FALSE)
-cat("\nResults saved to:", file.path(OUTPUT_DIR, "ldsc_combined_results.csv"), "\n")
-
-cat("\n=== Analysis Complete ===\n")

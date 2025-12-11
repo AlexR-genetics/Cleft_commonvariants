@@ -1,7 +1,5 @@
 #!/bin/bash
-# ==============================================================================
-# LDSC Analysis Pipeline
-# ==============================================================================
+
 # Description: Runs LD Score Regression to estimate genetic correlations
 #              between cleft lip/palate and neurodevelopmental traits.
 #
@@ -53,7 +51,6 @@ INT_SUMSTATS="intelligence_gwas.txt"
 # STEP 1: MUNGE SUMMARY STATISTICS
 # ==============================================================================
 
-echo "=== Step 1: Munging Summary Statistics ==="
 
 # Munge cleft GWAS
 python ${LDSC_DIR}/munge_sumstats.py \
@@ -106,7 +103,6 @@ python ${LDSC_DIR}/munge_sumstats.py \
 # STEP 2: GENETIC CORRELATION ANALYSES
 # ==============================================================================
 
-echo "=== Step 2: Running Genetic Correlation Analyses ==="
 
 # Cleft vs ADHD
 python ${LDSC_DIR}/ldsc.py \
@@ -164,6 +160,3 @@ python ${LDSC_DIR}/ldsc.py \
     --w-ld-chr ${LD_REF} \
     --out ${OUT_DIR}/CL_INT
 
-echo "=== LDSC Analysis Complete ==="
-echo "Results saved to: ${OUT_DIR}"
-echo "Process .log files with 01_ldsc_analysis.R"

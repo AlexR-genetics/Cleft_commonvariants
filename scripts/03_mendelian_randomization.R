@@ -1,22 +1,6 @@
 #!/usr/bin/env Rscript
-# ==============================================================================
 # Mendelian Randomization Analysis
-# ==============================================================================
-# Description: Two-sample MR analysis testing causal effects of genetic 
-#              liability to cleft lip/palate on neurodevelopmental and 
-#              psychiatric outcomes.
-#
-# Methods:     IVW, MR Egger, Weighted Median, Weighted Mode
-# Sensitivity: Heterogeneity (Cochran's Q), Pleiotropy (Egger intercept),
-#              Leave-one-out, MR-PRESSO
-#
-# Required packages: TwoSampleMR, ggplot2, dplyr, ggrepel, data.table, 
-#                    tidyverse, RadialMR, MRPRESSO
-# ==============================================================================
 
-# -----------------------------------------------------------------------------
-# Setup
-# -----------------------------------------------------------------------------
 
 library(TwoSampleMR)
 library(ggplot2)
@@ -48,9 +32,7 @@ if (!dir.exists(OUTPUT_DIR)) dir.create(OUTPUT_DIR, recursive = TRUE)
 N_CASES <- 2268
 N_CONTROLS <- 7913
 
-# -----------------------------------------------------------------------------
-# Outcome GWAS Files
-# -----------------------------------------------------------------------------
+
 
 OUTCOME_FILES <- c(
   "ADHD_gwas.txt",
@@ -79,7 +61,6 @@ OUTCOME_LABELS <- c(
 # PART 1: PREPARE EXPOSURE DATA (CLEFT)
 # ==============================================================================
 
-cat("=== Loading and Preparing Exposure Data ===\n")
 
 # Load cleft GWAS
 cleft_gwas <- fread(CLEFT_GWAS_FILE)
@@ -125,7 +106,6 @@ exposure_dat <- format_data(
   ncontrol_col = "N_CONTROLS"
 )
 
-# Clump to obtain independent instruments
 exposure_dat_clumped <- clump_data(
   exposure_dat,
   clump_kb = 10000,
@@ -134,13 +114,11 @@ exposure_dat_clumped <- clump_data(
   pop = "EUR"
 )
 
-cat("After clumping:", nrow(exposure_dat_clumped), "independent instruments\n")
 
 # Calculate F-statistic for instrument strength
 exposure_dat_clumped$F_stat <- (exposure_dat_clumped$beta.exposure^2) / 
                                (exposure_dat_clumped$se.exposure^2)
 mean_F <- mean(exposure_dat_clumped$F_stat)
-cat("Mean F-statistic:", round(mean_F, 2), "\n")
 
 if (mean_F < 10) {
   warning("Mean F-statistic < 10, instruments may be weak")
@@ -150,7 +128,6 @@ if (mean_F < 10) {
 # PART 2: PREPARE OUTCOME DATA
 # ==============================================================================
 
-cat("\n=== Processing Outcome GWAS Files ===\n")
 
 # Get list of instrumental SNPs
 instrument_snps <- exposure_dat_clumped$SNP
@@ -218,7 +195,6 @@ for (i in seq_along(OUTCOME_FILES)) {
 # PART 3: RUN MR ANALYSES
 # ==============================================================================
 
-cat("\n=== Running MR Analyses ===\n")
 
 # Run MR for each outcome
 mr_results <- lapply(harmonized_results, function(dat) {
@@ -241,7 +217,6 @@ heterogeneity_results <- lapply(harmonized_results, mr_heterogeneity) %>%
 # PART 4: GENERATE PLOTS
 # ==============================================================================
 
-cat("\n=== Generating Plots ===\n")
 
 # Individual SNP results
 snp_results <- lapply(names(harmonized_results), function(outcome_name) {
@@ -290,7 +265,6 @@ for (outcome_name in names(harmonized_results)) {
 # PART 5: SUMMARY VOLCANO PLOT
 # ==============================================================================
 
-cat("\n=== Creating Summary Volcano Plot ===\n")
 
 # Calculate Bonferroni threshold
 n_tests <- nrow(mr_results)
@@ -363,13 +337,3 @@ summary_table <- mr_results %>%
 
 fwrite(summary_table, file.path(OUTPUT_DIR, "MR_summary_table.csv"))
 
-# ==============================================================================
-# Complete
-# ==============================================================================
-
-cat("\n=== Analysis Complete ===\n")
-cat("Results saved to:", OUTPUT_DIR, "\n")
-cat("\nSummary of IVW results:\n")
-print(mr_results %>% 
-        filter(method == "Inverse variance weighted") %>%
-        select(outcome, nsnp, b, se, pval))
