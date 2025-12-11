@@ -57,7 +57,6 @@ PRS_FILES <- list(
   DEP = "depression_PRS_CC.all_score",
   INT = "int_PRS_CC.all_score",
   CLEFT = "Cleft_PRS_meta.all_score",
-  DD = "DDD_PRS_meta.all_score"
 )
 
 # Phenotype data files
@@ -69,7 +68,6 @@ MAIN_RELEASE_FILE <- "release_file.dta"
 # Load and Prepare Data
 # -----------------------------------------------------------------------------
 
-cat("Loading data...\n")
 
 # Load PCA data
 pc1 <- read.table(PCA_FILE, header = FALSE)
@@ -99,7 +97,6 @@ pca$Phenotype <- factor(
 # Load PRS Data
 # -----------------------------------------------------------------------------
 
-cat("Loading PRS data...\n")
 
 # Function to load and rename PRS file
 load_prs <- function(filepath, score_name) {
@@ -125,11 +122,6 @@ colnames(prs_cleft)[3] <- "PRS_Genomewide_CL"
 colnames(prs_cleft)[6] <- "PRS_0.05_CL"
 prs_cleft <- prs_cleft[, c(1, 2, 3, 6)]
 
-# DD PRS
-prs_dd <- fread(PRS_FILES$DD)
-colnames(prs_dd)[3] <- "PRS_Genomewide_DD"
-colnames(prs_dd)[6] <- "PRS_0.05_DD"
-prs_dd <- prs_dd[, c(1, 2, 3, 6)]
 
 # -----------------------------------------------------------------------------
 # Merge All PRS Data
@@ -164,31 +156,14 @@ scores_allsample <- scores_allsample %>%
 # Load Additional Phenotype Data (for subtype and outcome analyses)
 # -----------------------------------------------------------------------------
 
-# Load cleft subtype classifications
-dd3 <- fread(PHENOTYPE_CLASSIFIED_FILE)
-dd3$fam_id <- as.character(dd3$fam_id)
-dd3_upd <- merge(dd3, pheno, by.x = "fam_id", by.y = "FID")
-
-# Load study children data
-dd4 <- fread(STUDY_CHILDREN_FILE)
-dd4$Sample.ID <- as.character(dd4$Sample.ID)
-
-# Load main outcome data
-main <- read_dta(MAIN_RELEASE_FILE)
-
-# Merge phenotype data
-# Note: Adjust column selections based on your actual data structure
-scores_all_sample2 <- merge(scores_allsample, dd3_upd, 
-                            by.x = c("FID", "IID"), 
-                            by.y = c("fam_id", "V2"), 
-                            all.x = TRUE)
+#Adjust on the basis of phenotype file structure
+#end with scores_all_sample2 = merge (score_all_sample, phenotype_file by.x = (IID, FID),
+# by y= (IID,FID))
 
 # -----------------------------------------------------------------------------
 # Create Cleft Subtype Variables
 # -----------------------------------------------------------------------------
 
-# Note: These assume specific column names exist in your merged data
-# Adjust based on your actual phenotype coding
 
 scores_all_sample2 <- scores_all_sample2 %>%
   mutate(
@@ -242,11 +217,10 @@ scores_all_sample2 <- scores_all_sample2 %>%
 # ANALYSIS 1: CASE-CONTROL COMPARISONS
 # ==============================================================================
 
-cat("\n=== Running Case-Control Analyses ===\n")
 
 variables <- c('PRS_0.05_ADHD', 'PRS_0.05_DEP', 'PRS_0.05_anx', 'PRS_0.05_EA',
                'PRS_0.05_ASD', 'PRS_0.05_BP', 'PRS_0.05_INT', 'PRS_0.05_SCZ',
-               'PRS_0.05_CL', 'PRS_Genomewide_CL', 'PRS_0.05_DD', 'PRS_Genomewide_DD')
+               'PRS_0.05_CL', 'PRS_Genomewide_CL')
 
 results_case_control <- data.frame(
   Variable = character(),
@@ -263,14 +237,14 @@ for (var in variables) {
   # Full model with PRS
   model_full <- glm(
     as.formula(paste0("Phenotype ~ ", var, 
-                      " + PC1 + PC2 + PC3 + PC4 + PC5 + PC6 + PC7 + PC8 + PC9 + PC10")),
+                      " + gender + PC1 + PC2 + PC3 + PC4 + PC5 + PC6 + PC7 + PC8 + PC9 + PC10")),
     data = scores_allsample,
     family = "binomial"
   )
   
   # Null model (PCs only)
   model_null <- glm(
-    Phenotype ~ PC1 + PC2 + PC3 + PC4 + PC5 + PC6 + PC7 + PC8 + PC9 + PC10,
+    Phenotype ~  gender + PC1 + PC2 + PC3 + PC4 + PC5 + PC6 + PC7 + PC8 + PC9 + PC10,
     data = scores_allsample,
     family = "binomial"
   )
@@ -300,13 +274,11 @@ doc <- read_docx()
 doc <- body_add_flextable(doc, flextable(results_case_control))
 print(doc, target = file.path(OUTPUT_DIR, "results_CASE_CONTROL.docx"))
 
-cat("Case-control results saved.\n")
 
 # ==============================================================================
 # ANALYSIS 2: CLEFT SUBTYPE COMPARISONS
 # ==============================================================================
 
-cat("\n=== Running Cleft Subtype Analyses ===\n")
 
 phenotypes <- c(
   'cleft_lip_only_vs_control',
@@ -325,7 +297,7 @@ for (phenotype in phenotypes) {
     # Full model
     model_full <- glm(
       as.formula(paste0(phenotype, " ~ ", var,
-                        " + PC1 + PC2 + PC3 + PC4 + PC5 + PC6 + PC7 + PC8 + PC9 + PC10")),
+                        " +  gender + PC1 + PC2 + PC3 + PC4 + PC5 + PC6 + PC7 + PC8 + PC9 + PC10")),
       data = scores_all_sample2,
       family = "binomial"
     )
@@ -333,7 +305,7 @@ for (phenotype in phenotypes) {
     # Null model
     model_null <- glm(
       as.formula(paste0(phenotype, 
-                        " ~ PC1 + PC2 + PC3 + PC4 + PC5 + PC6 + PC7 + PC8 + PC9 + PC10")),
+                        " ~   gender + PC1 + PC2 + PC3 + PC4 + PC5 + PC6 + PC7 + PC8 + PC9 + PC10")),
       data = scores_all_sample2,
       family = "binomial"
     )
@@ -364,7 +336,6 @@ doc <- read_docx()
 doc <- body_add_flextable(doc, flextable(results_subtypes))
 print(doc, target = file.path(OUTPUT_DIR, "results_CleftSubtypes.docx"))
 
-cat("Cleft subtype results saved.\n")
 
 # ==============================================================================
 # ANALYSIS 3: BEHAVIOURAL/DEVELOPMENTAL OUTCOMES
@@ -379,33 +350,51 @@ combine_ratings <- function(maternal, paternal) {
          ifelse(!is.na(maternal), maternal, paternal))
 }
 
-# Create combined outcome variables
-# Note: Adjust column names based on your actual data
 scores_all_sample2 <- scores_all_sample2 %>%
   mutate(
-    # SDQ Total at different timepoints
     cc5y_10y_sdq_total_combined = combine_ratings(cc5ym_10y_sdq_total, cc5yf_10y_sdq_total),
-    cc5y_8yr_sdq_total_combined = combine_ratings(cc5ym_8yr_sdq_total, cc5yf_8yr_sdq_total),
-    ccpn_5yr_sdq_total_combined = combine_ratings(ccpnm_5yr_sdq_total, ccpnf_5yr_sdq_total),
-    
-    # MFQ and SCARED
     cc5y_10y_mfqtotal_combined = combine_ratings(cc5ym_10y_mfqtotal, cc5yf_10y_mfqtotal),
     cc5y_10y_scaredadjtot_combined = combine_ratings(cc5ym_10y_scaredadjtot, cc5yf_10y_scaredadjtot),
-    
-    # ASQ:SE
+    cc5y_8yr_sdq_total_combined = combine_ratings(cc5ym_8yr_sdq_total, cc5yf_8yr_sdq_total),
+    ccpn_5yr_sdq_total_combined = combine_ratings(ccpnm_5yr_sdq_total, ccpnf_5yr_sdq_total),
     ccpn_5yr_asqse_adjscr_combined = combine_ratings(ccpnm_5yr_asqse_adjscr, ccpnf_5yr_asqse_adjscr),
     ccpn_3yr_asqse_adjscr_combined = combine_ratings(ccpnm_3yr_asqse_adjscr, ccpnf_3yr_asqse_adjscr),
     ccpn_18m_asqse_adjscr_combined = combine_ratings(ccpnm_18m_asqse_adjscr, ccpnf_18m_asqse_adjscr),
-    
-    # SDQ Subscales
+    ccpn_18m_asqse_probsolv_combined = combine_ratings(ccpnm_18m_problemsolv_adjscore, ccpnf_18m_problemsolv_adjscore),
+    ccpn_18m_asqse_persoc_combined = combine_ratings(ccpnm_18m_persoc_adjscore, ccpnf_18m_persoc_adjscore),
+    ccpn_18m_asqse_finemotor_combined = combine_ratings(ccpnm_18m_finemotor_adjscore, ccpnf_18m_finemotor_adjscore),
+    ccpn_18m_asqse_grossmotor_combined = combine_ratings(ccpnm_18m_grossmotor_adjscore, ccpnf_18m_grossmotor_adjscore),
+    ccpn_18m_asqse_communication_combined = combine_ratings(ccpnm_18m_communication_adjscore, ccpnf_18m_communication_adjscore),
+    ccpn_3yr_asqse_probsolv_combined = combine_ratings(ccpnm_3yr_problemsolv_adjscr, ccpnf_3yr_problemsolv_adjscr),
+    ccpn_3yr_asqse_persoc_combined = combine_ratings(ccpnm_3yr_persoc_adjscore, ccpnf_3yr_persoc_adjscore),
+    ccpn_3yr_asqse_finemotor_combined = combine_ratings(ccpnm_3yr_finemotor_adjscore, ccpnf_3yr_finemotor_adjscore),
+    ccpn_3yr_asqse_grossmotor_combined = combine_ratings(ccpnm_3yr_grossmotor_adjscore, ccpnf_3yr_grossmotor_adjscore),
+    ccpn_3yr_asqse_communication_combined = combine_ratings(ccpnm_3yr_communication_adjscore, ccpnf_3yr_communication_adjscore),
+    ccpn_5yr_asqse_probsolv_combined = combine_ratings(ccpnm_5yr_problemsolv_adjscr, ccpnf_5yr_problemsolv_adjscr),
+    ccpn_5yr_asqse_persoc_combined = combine_ratings(ccpnm_5yr_persoc_adjscore, ccpnf_5yr_persoc_adjscore),
+    ccpn_5yr_asqse_finemotor_combined = combine_ratings(ccpnm_5yr_finemotor_adjscore, ccpnf_5yr_finemotor_adjscore),
+    ccpn_5yr_asqse_grossmotor_combined = combine_ratings(ccpnm_5yr_grossmotor_adjscore, ccpnf_5yr_grossmotor_adjscore),
+    ccpn_5yr_asqse_communication_combined = combine_ratings(ccpnm_5yr_communication_adjscore, ccpnf_5yr_communication_adjscore),
     ccpn_5yr_sdq_emotional_combined = combine_ratings(ccpnm_5yr_sdq_emotional, ccpnf_5yr_sdq_emotional),
     ccpn_5yr_sdq_conduct_combined = combine_ratings(ccpnm_5yr_sdq_conduct, ccpnf_5yr_sdq_conduct),
     ccpn_5yr_sdq_hyperactivity_combined = combine_ratings(ccpnm_5yr_sdq_hyperactivity, ccpnf_5yr_sdq_hyperactivity),
     ccpn_5yr_sdq_peer_combined = combine_ratings(ccpnm_5yr_sdq_peer, ccpnf_5yr_sdq_peer),
-    ccpn_5yr_sdq_prosocial_combined = combine_ratings(ccpnm_5yr_sdq_prosocial, ccpnf_5yr_sdq_prosocial)
-  )
+    ccpn_5yr_sdq_prosocial_combined = combine_ratings(ccpnm_5yr_sdq_prosocial, ccpnf_5yr_sdq_prosocial),
+    cc5y_8yr_sdq_emotional_combined = combine_ratings(cc5ym_8yr_sdq_emotional, cc5yf_8yr_sdq_emotional),
+    cc5y_8yr_sdq_conduct_combined = combine_ratings(cc5ym_8yr_sdq_conduct, cc5yf_8yr_sdq_conduct),
+    cc5y_8yr_sdq_hyperactivity_combined = combine_ratings(cc5ym_8yr_sdq_hyperactivity, cc5yf_8yr_sdq_hyperactivity),
+    cc5y_8yr_sdq_peer_combined = combine_ratings(cc5ym_8yr_sdq_peer, cc5yf_8yr_sdq_peer),
+    cc5y_8yr_sdq_prosocial_combined = combine_ratings(cc5ym_8yr_sdq_prosocial, cc5yf_8yr_sdq_prosocial),
+    cc5y_10y_sdq_emotional_combined = combine_ratings(cc5ym_10y_sdq_emotional, cc5yf_10y_sdq_emotional),
+    cc5y_10y_sdq_conduct_combined = combine_ratings(cc5ym_10y_sdq_conduct, cc5yf_10y_sdq_conduct),
+    cc5y_10y_sdq_hyperactivity_combined = combine_ratings(cc5ym_10y_sdq_hyperactivity, cc5yf_10y_sdq_hyperactivity),
+    cc5y_10y_sdq_peer_combined = combine_ratings(cc5ym_10y_sdq_peer, cc5yf_10y_sdq_peer),
+    cc5y_10y_sdq_prosocial_combined = combine_ratings(cc5ym_10y_sdq_prosocial, cc5yf_10y_sdq_prosocial)
+    
+    
+     )
 
-# Define outcome variables
+# Define the new continuous outcome variables
 outcomes <- c(
   "cc5y_10y_sdq_total_combined",
   "cc5y_10y_mfqtotal_combined",
@@ -414,8 +403,41 @@ outcomes <- c(
   "ccpn_5yr_sdq_total_combined",
   "ccpn_5yr_asqse_adjscr_combined",
   "ccpn_3yr_asqse_adjscr_combined",
-  "ccpn_18m_asqse_adjscr_combined"
+  "ccpn_18m_asqse_adjscr_combined",
+  "ccpn_18m_asqse_probsolv_combined",
+  "ccpn_18m_asqse_persoc_combined",
+  "ccpn_18m_asqse_finemotor_combined",
+  "ccpn_18m_asqse_grossmotor_combined",
+  "ccpn_18m_asqse_communication_combined",
+  "ccpn_3yr_asqse_probsolv_combined",
+  "ccpn_3yr_asqse_persoc_combined",
+  "ccpn_3yr_asqse_finemotor_combined",
+  "ccpn_3yr_asqse_grossmotor_combined",
+  "ccpn_3yr_asqse_communication_combined",
+  "ccpn_5yr_asqse_probsolv_combined",
+  "ccpn_5yr_asqse_persoc_combined",
+  "ccpn_5yr_asqse_finemotor_combined",
+  "ccpn_5yr_asqse_grossmotor_combined",
+  "ccpn_5yr_asqse_communication_combined",
+  "ccpn_5yr_sdq_emotional_combined",
+  "ccpn_5yr_sdq_conduct_combined",
+  "ccpn_5yr_sdq_hyperactivity_combined",
+  "ccpn_5yr_sdq_peer_combined",
+  "ccpn_5yr_sdq_prosocial_combined",
+  "cc5y_8yr_sdq_emotional_combined",
+  "cc5y_8yr_sdq_conduct_combined",
+  "cc5y_8yr_sdq_hyperactivity_combined",
+  "cc5y_8yr_sdq_peer_combined",
+  "cc5y_8yr_sdq_prosocial_combined",
+  "cc5y_10y_sdq_emotional_combined",
+  "cc5y_10y_sdq_conduct_combined",
+  "cc5y_10y_sdq_hyperactivity_combined",
+  "cc5y_10y_sdq_peer_combined",
+  "cc5y_10y_sdq_prosocial_combined"
 )
+
+
+
 
 results_continuous <- data.frame()
 
@@ -425,14 +447,14 @@ for (outcome in outcomes) {
     # Linear regression with PRS
     model_full <- lm(
       as.formula(paste0(outcome, " ~ ", var,
-                        " + PC1 + PC2 + PC3 + PC4 + PC5 + PC6 + PC7 + PC8 + PC9 + PC10")),
+                        " + gender + PC1 + PC2 + PC3 + PC4 + PC5 + PC6 + PC7 + PC8 + PC9 + PC10")),
       data = scores_all_sample2
     )
     
     # Null model
     model_null <- lm(
       as.formula(paste0(outcome,
-                        " ~ PC1 + PC2 + PC3 + PC4 + PC5 + PC6 + PC7 + PC8 + PC9 + PC10")),
+                        " ~ gender + PC1 + PC2 + PC3 + PC4 + PC5 + PC6 + PC7 + PC8 + PC9 + PC10")),
       data = scores_all_sample2
     )
     
@@ -464,7 +486,6 @@ doc <- read_docx()
 doc <- body_add_flextable(doc, flextable(results_continuous))
 print(doc, target = file.path(OUTPUT_DIR, "results_SCALES.docx"))
 
-cat("Behavioural outcome results saved.\n")
 
 # ==============================================================================
 # ANALYSIS 4: ND-CNV CARRIER ANALYSIS
@@ -479,13 +500,13 @@ for (var in variables) {
   
   model_full <- glm(
     as.formula(paste0("NDD_CNV ~ ", var,
-                      " + PC1 + PC2 + PC3 + PC4 + PC5 + PC6 + PC7 + PC8 + PC9 + PC10")),
+                      " + gender + + PC1 + PC2 + PC3 + PC4 + PC5 + PC6 + PC7 + PC8 + PC9 + PC10")),
     data = scores_all_sample2,
     family = "binomial"
   )
   
   model_null <- glm(
-    NDD_CNV ~ PC1 + PC2 + PC3 + PC4 + PC5 + PC6 + PC7 + PC8 + PC9 + PC10,
+    NDD_CNV ~ gender + PC1 + PC2 + PC3 + PC4 + PC5 + PC6 + PC7 + PC8 + PC9 + PC10,
     data = scores_all_sample2,
     family = "binomial"
   )
@@ -555,12 +576,3 @@ for (var in variables) {
 doc <- read_docx()
 doc <- body_add_flextable(doc, flextable(results_cnv_adj))
 print(doc, target = file.path(OUTPUT_DIR, "results_CNV_carriers_adjusted.docx"))
-
-cat("CNV carrier results saved.\n")
-
-# ==============================================================================
-# Complete
-# ==============================================================================
-
-cat("\n=== All Analyses Complete ===\n")
-cat("Results saved to:", OUTPUT_DIR, "\n")
