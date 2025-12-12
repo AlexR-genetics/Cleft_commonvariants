@@ -126,7 +126,7 @@ for (prs_df in list(prs_int, prs_scz, prs_bp, prs_asd, prs_ea,
 
 prs_vars <- c('PRS_0.05_ADHD', 'PRS_0.05_DEP', 'PRS_0.05_anx', 'PRS_0.05_EA',
               'PRS_0.05_ASD', 'PRS_0.05_BP', 'PRS_0.05_INT', 'PRS_0.05_SCZ',
-              'PRS_0.05_CL', 'PRS_Genomewide_CL', 'PRS_0.05_DD', 'PRS_Genomewide_DD')
+              'PRS_0.05_CL', 'PRS_Genomewide_CL')
 
 scores_allsample <- scores_allsample %>%
   mutate(across(all_of(prs_vars), ~ scale(.) %>% as.vector))
@@ -139,7 +139,7 @@ scores_allsample <- scores_allsample %>%
 # -----------------------------------------------------------------------------
 
 #Adjust on the basis of phenotype file structure
-#end with scores_all_sample2 = merge (score_all_sample, phenotype_file by.x = (IID, FID),
+#The end process should be with scores_all_sample2 = merge (score_all_sample, phenotype_file by.x = (IID, FID),
 # by y= (IID,FID))
 
 # -----------------------------------------------------------------------------
@@ -323,8 +323,6 @@ print(doc, target = file.path(OUTPUT_DIR, "results_CleftSubtypes.docx"))
 # ANALYSIS 3: BEHAVIOURAL/DEVELOPMENTAL OUTCOMES
 # ==============================================================================
 
-cat("\n=== Running Behavioural Outcome Analyses ===\n")
-
 # Function to combine maternal and paternal ratings
 combine_ratings <- function(maternal, paternal) {
   ifelse(!is.na(maternal) & !is.na(paternal),
@@ -472,8 +470,6 @@ print(doc, target = file.path(OUTPUT_DIR, "results_SCALES.docx"))
 # ==============================================================================
 # ANALYSIS 4: ND-CNV CARRIER ANALYSIS
 # ==============================================================================
-
-cat("\n=== Running ND-CNV Carrier Analyses ===\n")
 
 # Analysis comparing PRS between CNV carriers and non-carriers within cases
 results_cnv <- data.frame()
