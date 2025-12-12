@@ -311,8 +311,6 @@ ggsave(file.path(OUTPUT_DIR, "MR_volcano_plot.png"),
 # PART 6: SAVE RESULTS
 # ==============================================================================
 
-cat("\n=== Saving Results ===\n")
-
 # Save main results
 fwrite(mr_results, file.path(OUTPUT_DIR, "full_mr_results.csv"))
 fwrite(pleiotropy_results, file.path(OUTPUT_DIR, "pleiotropy_results.csv"))
