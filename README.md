@@ -100,13 +100,6 @@ Individual-level data from the Cleft Collective cannot be shared publicly due to
 
 Control data from the Millennium Cohort Study is available through the [UK Data Service](https://ukdataservice.ac.uk/).
 
-## Citation
-
-If you use this code, please cite:
-
-```
-[Citation details to be added upon publication]
-```
 
 ## Contact
 
