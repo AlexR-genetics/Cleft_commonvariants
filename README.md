@@ -4,8 +4,7 @@
 Analysis code accompanying the manuscript:
 
 > **Common Variant Contributions to Neurodevelopmental Risk in Orofacial Clefts**  
-> [Author list]  
-> [Journal, 2026]
+
 
 ## Overview
 
